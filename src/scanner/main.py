@@ -71,9 +71,11 @@ def main():
           f"— {result['summary']['total_findings']} finding(s)")
     print(f"Written to {args.output}")
 
-    if save_run:
+    if save_run and os.environ.get("DATABASE_URL"):
         save_run(result)
-
+    elif save_run:
+        print("No DATABASE_URL set — skipping database persistence "
+              "(JSON output above is unaffected).")
 
 if __name__ == "__main__":
     main()

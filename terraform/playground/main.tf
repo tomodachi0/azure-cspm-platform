@@ -22,7 +22,10 @@ terraform {
 
 provider "azurerm" {
   features {}
+  storage_use_azuread = true
 }
+
+data "azurerm_client_config" "current" {}
 
 resource "random_string" "suffix" {
   length  = 6
@@ -32,7 +35,7 @@ resource "random_string" "suffix" {
 
 resource "azurerm_resource_group" "playground" {
   name     = "cspm-playground-rg"
-  location = "westeurope"
+  location = "spaincentral"
 }
 
 # Should trigger the storage-public-access check
@@ -73,6 +76,12 @@ resource "azurerm_managed_disk" "insecure" {
   storage_account_type = "Standard_LRS"
   create_option        = "Empty"
   disk_size_gb         = 4
+}
+
+resource "azurerm_role_assignment" "self_blob_data" {
+  scope                = azurerm_storage_account.insecure.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azurerm_client_config.current.object_id
 }
 
 output "resource_group" {
