@@ -1,0 +1,5 @@
+azure-identity>=1.16
+azure-mgmt-network>=25.3
+azure-mgmt-storage>=21.2
+azure-mgmt-compute>=31.0
+psycopg2-binary>=2.9
