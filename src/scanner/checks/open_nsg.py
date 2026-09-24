@@ -16,6 +16,8 @@ class OpenNSGCheck(BaseCheck):
         client = NetworkManagementClient(self.credential, self.subscription_id)
 
         for nsg in client.network_security_groups.list_all():
+            self._scanned()  # one NSG = one resource under this control
+
             rules = (nsg.security_rules or []) + (nsg.default_security_rules or [])
             for rule in rules:
                 if rule.direction != "Inbound" or rule.access != "Allow":

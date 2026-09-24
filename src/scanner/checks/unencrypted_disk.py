@@ -12,12 +12,12 @@ class UnencryptedDiskCheck(BaseCheck):
         client = ComputeManagementClient(self.credential, self.subscription_id)
 
         for disk in client.disks.list():
+            self._scanned()  # one managed disk = one resource
+
             enc = getattr(disk, "encryption", None)
             enc_type = getattr(enc, "type", None) if enc else None
 
             if enc_type in (None, "EncryptionAtRestWithPlatformKey"):
-                # Platform-managed key is the *minimum*; flag as low so it
-                # doesn't drown out disks with no encryption at all.
                 if enc_type is None:
                     findings.append(self._finding(
                         resource_id=disk.id,

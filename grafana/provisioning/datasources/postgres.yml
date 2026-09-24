@@ -1,0 +1,17 @@
+apiVersion: 1
+
+datasources:
+  - name: CSPM Postgres
+    type: postgres
+    access: proxy
+    url: postgres:5432
+    database: postgres
+    user: postgres
+    isDefault: true
+    editable: true
+    secureJsonData:
+      password: devpass
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1600
+      timescaledb: false

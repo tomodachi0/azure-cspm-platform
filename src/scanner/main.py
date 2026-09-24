@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from azure.identity import DefaultAzureCredential
 
 from scanner.checks import ALL_CHECKS
-from scanner.scoring import score_findings
+from scanner.scoring import score
 
 try:
     from scanner.storage import save_run  # optional Postgres/Prometheus sink
@@ -29,17 +29,27 @@ except ImportError:
 def run_scan(subscription_id: str):
     credential = DefaultAzureCredential()
     all_findings = []
+    check_totals = {}
+    check_meta = {}
 
     for check_cls in ALL_CHECKS:
         check = check_cls(credential, subscription_id)
+        check_meta[check_cls.check_id] = {
+            "severity": check_cls.default_severity,
+            "cis_reference": check_cls.cis_reference,
+        }
         try:
             findings = check.run()
             all_findings.extend(findings)
-            print(f"[ok]   {check_cls.check_id}: {len(findings)} finding(s)")
+            check_totals[check_cls.check_id] = check.total_scanned
+            print(f"[ok]   {check_cls.check_id}: "
+                  f"{len(findings)} finding(s) / {check.total_scanned} scanned")
         except Exception as exc:  # noqa: BLE001 - keep scanning even if one check fails
+            check_totals[check_cls.check_id] = check.total_scanned
             print(f"[fail] {check_cls.check_id}: {exc}", file=sys.stderr)
 
-    summary = score_findings(all_findings)
+    summary = score(all_findings, check_totals, check_meta)
+
     result = {
         "subscription_id": subscription_id,
         "scanned_at": datetime.now(timezone.utc).isoformat(),
@@ -66,9 +76,11 @@ def main():
 
     with open(args.output, "w") as f:
         json.dump(result, f, indent=2)
+
     print(f"\nScore: {result['summary']['score']}/100 "
           f"(grade {result['summary']['grade']}) "
-          f"— {result['summary']['total_findings']} finding(s)")
+          f"— {result['summary']['total_findings']} finding(s) across "
+          f"{len(result['summary']['controls'])} applicable control(s)")
     print(f"Written to {args.output}")
 
     if save_run and os.environ.get("DATABASE_URL"):
@@ -76,6 +88,7 @@ def main():
     elif save_run:
         print("No DATABASE_URL set — skipping database persistence "
               "(JSON output above is unaffected).")
+
 
 if __name__ == "__main__":
     main()

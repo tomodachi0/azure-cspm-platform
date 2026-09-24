@@ -12,6 +12,8 @@ class PublicStorageCheck(BaseCheck):
         client = StorageManagementClient(self.credential, self.subscription_id)
 
         for account in client.storage_accounts.list():
+            self._scanned()  # one storage account = one resource
+
             if account.allow_blob_public_access:
                 findings.append(self._finding(
                     resource_id=account.id,

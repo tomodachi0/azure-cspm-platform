@@ -29,6 +29,15 @@ class BaseCheck:
     def __init__(self, credential, subscription_id: str):
         self.credential = credential
         self.subscription_id = subscription_id
+        # Total resources this check actually examined (pass + fail),
+        # not just the ones that triggered a finding. This is the
+        # denominator for the CIS-style coverage score — call
+        # self._scanned() once per resource as you iterate over it,
+        # regardless of whether it turns out compliant or not.
+        self.total_scanned = 0
+
+    def _scanned(self, n: int = 1) -> None:
+        self.total_scanned += n
 
     def run(self) -> List[Finding]:
         """Override in subclasses. Return a list of Finding objects."""
