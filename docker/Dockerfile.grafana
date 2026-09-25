@@ -1,0 +1,6 @@
+FROM grafana/grafana:11.1.0
+
+# Bake dashboards + provisioning into the image itself — no volume
+# mounts needed, which keeps this deployable as a plain Container App.
+COPY grafana/provisioning /etc/grafana/provisioning
+COPY grafana/dashboards /var/lib/grafana/dashboards
