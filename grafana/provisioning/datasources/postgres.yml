@@ -4,14 +4,14 @@ datasources:
   - name: CSPM Postgres
     type: postgres
     access: proxy
-    url: postgres:5432
-    database: postgres
-    user: postgres
+    url: ${GF_DB_HOST}:5432
+    database: ${GF_DB_NAME}
+    user: ${GF_DB_USER}
     isDefault: true
     editable: true
     secureJsonData:
-      password: devpass
+      password: ${GF_DB_PASSWORD}
     jsonData:
-      sslmode: disable
+      sslmode: require
       postgresVersion: 1600
       timescaledb: false
