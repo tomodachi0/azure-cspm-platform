@@ -1,5 +1,5 @@
 from azure.mgmt.network import NetworkManagementClient
-from .base import BaseCheck, Finding
+from .base import BaseCheck
 
 # Ports that should never be open to the whole internet
 SENSITIVE_PORTS = {"22", "3389", "1433", "3306", "5432", "6379", "27017"}

@@ -4,7 +4,7 @@ Each check inspects one narrow slice of an Azure subscription and
 returns a list of Finding objects. Keeping checks small and isolated
 means the scanner can grow (new checks) without touching existing ones.
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List
 
 
