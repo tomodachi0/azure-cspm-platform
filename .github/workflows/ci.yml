@@ -53,3 +53,5 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}-grafana:latest
             ghcr.io/${{ github.repository }}-grafana:${{ github.sha }}
+
+            
