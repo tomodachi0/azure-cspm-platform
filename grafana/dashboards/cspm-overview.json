@@ -1,0 +1,122 @@
+{
+  "title": "Azure CSPM Overview",
+  "uid": "cspm-overview",
+  "schemaVersion": 39,
+  "version": 3,
+  "refresh": "30s",
+  "time": { "from": "now-30d", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Compliance score over time",
+      "type": "timeseries",
+      "gridPos": { "h": 9, "w": 16, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": { "min": 0, "max": 100, "unit": "short" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT scanned_at AS \"time\", (raw_result->'summary'->>'score')::numeric AS score FROM scan_runs ORDER BY scanned_at;",
+          "format": "time_series",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Latest compliance score",
+      "type": "gauge",
+      "gridPos": { "h": 9, "w": 8, "x": 16, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 100,
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 50 },
+              { "color": "green", "value": 80 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT (raw_result->'summary'->>'score')::numeric AS score FROM scan_runs ORDER BY scanned_at DESC LIMIT 1;",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Compliance % by control (latest run)",
+      "type": "barchart",
+      "gridPos": { "h": 9, "w": 16, "x": 0, "y": 9 },
+      "fieldConfig": {
+        "defaults": { "unit": "percent", "min": 0, "max": 100 },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT c->>'check_id' AS control, round((c->>'compliance')::numeric*100,1) AS compliance_pct FROM scan_runs, jsonb_array_elements(raw_result->'summary'->'controls') AS c WHERE scanned_at = (SELECT max(scanned_at) FROM scan_runs) ORDER BY compliance_pct ASC;",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Findings by severity (latest run)",
+      "type": "piechart",
+      "gridPos": { "h": 9, "w": 8, "x": 16, "y": 9 },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": {
+        "pieType": "pie",
+        "displayLabels": ["percent", "name"],
+        "legend": { "displayMode": "list", "placement": "right", "values": ["value"] },
+        "reduceOptions": { "values": true, "calcs": ["lastNotNull"], "fields": "" },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT key AS severity, value::int AS count FROM scan_runs, jsonb_each_text(raw_result->'summary'->'by_severity') WHERE scanned_at = (SELECT max(scanned_at) FROM scan_runs);",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Per-control detail (latest run)",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 18 },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "targets": [
+        {
+          "rawSql": "SELECT c->>'check_id' AS control, c->>'cis_reference' AS cis_control, c->>'severity' AS severity, (c->>'total_resources')::int AS total_resources, (c->>'failed_resources')::int AS failed_resources, round((c->>'compliance')::numeric*100,1) AS compliance_pct FROM scan_runs, jsonb_array_elements(raw_result->'summary'->'controls') AS c WHERE scanned_at = (SELECT max(scanned_at) FROM scan_runs) ORDER BY compliance_pct ASC;",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Findings detail (latest run)",
+      "type": "table",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 26 },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "targets": [
+        {
+          "rawSql": "SELECT f->>'severity' AS severity, f->>'check_id' AS check, f->>'resource_name' AS resource, f->>'description' AS description, f->>'remediation' AS remediation FROM scan_runs, jsonb_array_elements(raw_result->'findings') AS f WHERE scanned_at = (SELECT max(scanned_at) FROM scan_runs) ORDER BY CASE f->>'severity' WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END;",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}
